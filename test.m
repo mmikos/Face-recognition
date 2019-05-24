@@ -34,7 +34,23 @@ clear
 %     end
     
 
+    eigenvalues = diag(diageigenvalues(1:10, 1:10));
+    [sorted_values, index] = sort(eigenvalues,'descend');% largest eigenvalue first - biggest variance
+    eigenvect=[];
+    for k=1:10
+        eigface  = eigenvectors(:, k);
+        eigenvect{k} = reshape(eigface,im_size,im_size);
+    end   
+    
+    eigenface_vector  = [eigenvect{index(1)} eigenvect{index(2)} eigenvect{index(3)};
+                    eigenvect{index(4)} eigenvect{index(5)} eigenvect{index(6)};
+                    eigenvect{index(7)} eigenvect{index(8)} eigenvect{index(9)}];
 
+    figure;
+    imagesc(eigenface_vector);
+    title('eigenfaces');
+    colormap gray
+    
 
 % imshow(im_reshaped)
 % colormap gray
@@ -119,7 +135,13 @@ clear
 %         img_sum = img_sum + (st.img_extracted{i});
 %         img_sum = img_sum + (st.img_extracted{k}/no_faces);
     end 
-
+    
+%     face_vector = [];   
+%     for i = 1:6
+%     face = eigenfaces{index(i)};
+%     face_vector  = [face_vector face];
+%     end
+    
 z  = [eigenfaces{1} eigenfaces{2} eigenfaces{3}; eigenfaces{4} eigenfaces{5} eigenfaces{6}];
 figure(5),imshow(z,'InitialMagnification', 2000);
 title('Reconstructed faces');

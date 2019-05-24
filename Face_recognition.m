@@ -1,12 +1,9 @@
-clear
+    clear
     load('faces/ORL_32x32')
-    load('faces/3Train/3.mat')
-    load('faces/5Train/5.mat')
-    load('faces/7Train/7.mat')
     
     im_size = 32; 
     no_faces = 400;
-
+    
     im_norm = double(fea);
     im_norm = (im_norm-min(im_norm(:)))/(max(im_norm(:))-min(im_norm(:)));
 %     im_norm = im_norm(2,:);
@@ -20,92 +17,96 @@ clear
     colormap gray
     
     % Substract mean
-    B = (im_norm'-mx)';
+    B = (im_norm'-mx);
   
     % Covariance matrix
-%     S = cov(B);
-    S = 1/n * B*B';
+    S = cov(B);
+%     S = 1/n * B*B';
     
-    [eigenvectors, eigenvalues] = eig(S);
+    [eigenvectors, diageigenvalues] = eig(S);
     
-    face_space_coordinates = (B' * eigenvectors');
+%     eigenvectors = eigenvectors(:, 1:10);
+     
+    face_space_coordinates = (eigenvectors' * B')';
     
     eigenfaces=[];
     
     for k=1:no_faces
-        eigface  = face_space_coordinates(:, k);
+        eigface  = face_space_coordinates(k, :);
         eigenfaces{k} = reshape(eigface,im_size,im_size);
-    end
+    end   
+
+    eigenvalues = diag(diageigenvalues);
+    [sorted_values, index] = sort(eigenvalues,'descend');% largest eigenvalue first - biggest variance
+
+    face_vector  = [eigenfaces{index(1)} eigenfaces{index(2)} eigenfaces{index(3)};
+                    eigenfaces{index(4)} eigenfaces{index(5)} eigenfaces{index(6)};
+                    eigenfaces{index(7)} eigenfaces{index(8)} eigenfaces{index(9)};
+                    eigenfaces{index(10)} eigenfaces{index(11)} eigenfaces{index(12)}];
+
+    figure;
+    imagesc(face_vector);
+    title('eigenfaces');
+    colormap gray
     
-x=diag(eigenvalues);
-[xc,xci]=sort(x,'descend');% largest eigenval    
-z  = [ eigenfaces{xci(1)}  eigenfaces{xci(2)}   eigenfaces{xci(3)} ; eigenfaces{xci(4)}     eigenfaces{xci(5)}   eigenfaces{xci(6)}];
-figure(5),imagesc(z);;title('eigenfaces');colormap gray
-
-%%
+    %% Training
     
-    rec = face_space_coordinates' * eigenvectors;
-
-%     reconstructed = (mx + sum(face_space_coordinates))';
+    clear
+    load('faces/ORL_32x32')
+    load('faces/3Train/3.mat')
+%     load('faces/5Train/5.mat')
+%     load('faces/7Train/7.mat')
+    im_size = 32; 
+    no_faces_train = length(trainIdx);
+    k = 50;
     
-    reconsturcted_faces = (mx + rec')';
+    train3 = fea(trainIdx, :);
+
+    train3 = double(train3);
+    train3 = train3/255;
+
     
-    face1 = reconsturcted_faces(100,:);
-    face1_reshaped = reshape(face1, 32, 32);
-%     imagesc(face1_reshaped)
-    imshow(face1_reshaped,'Initialmagnification','fit')
+    [mean_face, eigenvectors, eigenvalues] = eigenfaces(train3, k); 
     
-    img_sum = zeros(im_size);
+    [sorted_values, index] = sort(eigenvalues,'descend');% largest eigenvalue first - biggest variance
 
-    for i = 1:no_faces
-        
-        im_reconstruct = reconsturcted_faces(i, :);
-        im_reshaped = reshape(im_reconstruct, 32, 32);
-        eigenfaces{i} = im_reshaped;
-%         img_sum = img_sum + (st.img_extracted{i});
-%         img_sum = img_sum + (st.img_extracted{k}/no_faces);
-    end 
+    face_space_coordinates = (eigenvectors' * (train3'-mean_face)');
+    
+    eigenfaces=[];
+    
+     for i = 1:k
+        eigface  = face_space_coordinates(i, :);
+        eigenfaces{i} = reshape(eigface,im_size,im_size);
+     end
+       
+    [sorted_values, index] = sort(eigenvalues,'descend');% largest eigenvalue first - biggest variance  
+     
+    face_vector  = [eigenfaces{index(1)} eigenfaces{index(2)} eigenfaces{index(3)};
+                    eigenfaces{index(4)} eigenfaces{index(5)} eigenfaces{index(6)};
+                    eigenfaces{index(7)} eigenfaces{index(8)} eigenfaces{index(9)};];
 
-z  = [eigenfaces{1} eigenfaces{2} eigenfaces{3}; eigenfaces{4} eigenfaces{5} eigenfaces{6}];
-figure(5),imshow(z,'InitialMagnification', 2000);
-title('Reconstructed faces');
-% eigenfaces=[];
-% for i=1:no_faces
-%     c  = W(:,i);
-%     eigenfaces{i} = reshape(c, im_size, im_size);
-% end
-% 
-% x=diag(D);
-% [xc,xci]=sort(x,'descend');% largest eigenval
-% z  = [eigenfaces{xci(1)}  eigenfaces{xci(2)}   eigenfaces{xci(3)} ; eigenfaces{xci(4)}     eigenfaces{xci(5)}   eigenfaces{xci(6)}];
-% figure(5),imshow(z,'Initialmagnification','fit');
-
-% X1=U*pinv(U*B+mx);
-% X2=U(:,2)*pinv(U(:,2))*B+mx;
-i = 2;
-W = zeros(32, 32);
-W(:, i) = (eigenvectors(:, i))' * B;
-
-W(i, i)= reshape(W(i, i), 32, 32);
-
-X_hat = mx + eigenvectors * W;
-
-
-
-% plot(X1(1,:),X1(2,:),'.')
-% hold on
-% plot(X2(1,:),X2(2,:),'.')
-% grid on 
-% axis equal
-
-PC1=(eigenvectors(:,[1,2])*pinv(eigenvectors(:,[1,2]))*B);
-plot(PC1(1,:))
-hold on
-plot(PC1(2,:))
-
-imshow(Y)
-
-
-% 1/(n-1)* SS'
-% M = mean(fea)
-
+    figure;
+    imagesc(face_vector);
+    title('eigenfaces');
+    colormap gray
+    
+    %% Test
+    
+     load('faces/ORL_32x32')
+     load('faces/3Train/3.mat')
+%     load('faces/5Train/5.mat')
+%     load('faces/7Train/7.mat')
+    im_size = 32; 
+    no_faces_test = length(testIdx);
+    test3 = fea(testIdx, :);
+    
+    test3 = double(test3);
+    test3 = test3/255;
+    
+    img_subst_mean = (test3' - mean_face);
+    
+    eigenface_space_test  = (eigenvectors' * img_subst_mean');
+    
+    reconsturction = mean_face + eigenface_space'; 
+    
+    
