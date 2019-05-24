@@ -1,98 +1,59 @@
 clear
     load('faces/ORL_32x32')
     load('faces/3Train/3.mat')
-
-    im_size = 32; 
-    no_faces = 40;
-
-%     im = fea(400, :);
-    im_norm = double(fea);
-%     im_norm = im_norm/256;
-    im_norm = (im_norm-min(im_norm(:)))/(max(im_norm(:))-min(im_norm(:)));
-%     
-%     im_reshaped = reshape(im_norm, 32, 32);
-
-%     img_sum = zeros(im_size);
-
-%     for i = 1:no_faces
-%         
-%         im = fea(i, :);
-%         im_norm = double(im);
-%         im_norm = (im_norm-min(im_norm(:)))/(max(im_norm(:))-min(im_norm(:)));
-%         im_reshaped = reshape(im_norm, 32, 32);
-% 
-%         st.img_extracted{i} = im_reshaped;
-%         img_sum = img_sum + (st.img_extracted{i});
-% %         img_sum = img_sum + (st.img_extracted{k}/no_faces);
-%     end
-%     
-%     img_mean = img_sum/no_faces; %average face
-% 
-% 
-%     for i = 1:no_faces
-%         st.img_extracted_centered{i}  = st.img_extracted{i} - img_mean;
-%     end
+    load('faces/5Train/5.mat')
+    load('faces/7Train/7.mat')
     
+    im_size = 32; 
+    no_faces = 400;
 
-
-
-% imshow(im_reshaped)
-% colormap gray
-
-% figure;
-% imshow(struct.img_extracted{i},'Initialmagnification','fit');
-
-
-
+    im_norm = double(fea);
+    im_norm = (im_norm-min(im_norm(:)))/(max(im_norm(:))-min(im_norm(:)));
+%     im_norm = im_norm(2,:);
 %%
-
-% A = zeros(im_size*im_size,no_faces);% (N*N)*M   2500*4
-% 
-% for i=1:no_faces
-%     A(:,i) =  struct.img_extracted_mean{i}(:);
-% end
-% % covariance matrix small dimension (transposed)
-% S = A' * A;
-% figure(4),imagesc(C);title('covariance')
-
     [m, n] = size(im_norm);
 
     mx = mean(im_norm)';
     mx_reshaped = reshape(mx, 32, 32);
-%     imshow(mx_reshaped)
-    imagesc(mx_reshaped)
+    imshow(mx_reshaped,'Initialmagnification','fit')
     title('Mean face')
     colormap gray
     
-    B = im_norm'-mx;
-    k = 10;
-    %Covariance matrix
+    % Substract mean
+    B = (im_norm'-mx)';
+  
+    % Covariance matrix
+%     S = cov(B);
     S = 1/n * B*B';
-%     S2 = cov(B');
-
+    
     [eigenvectors, eigenvalues] = eig(S);
     
-    eigen = eigenvectors(:, 1000);
-    eigen_reshaped = reshape(eigen, 32, 32);
-%     imshow(eigen_reshaped,'InitialMagnification', 2000)
-    imagesc(eigen_reshaped)
-    title('Eigen vector 1000')
-    colormap gray
-% D=fliplr(flipud(D));
-% U=fliplr(U);
-
-    face_space_coordinates = (eigenvectors' * B)';
-%     imshow(eigen_reshaped,'InitialMagnification', 2000)
-    imagesc(eigen_reshaped)
-    title('Eigen vector 1000')
-    colormap gray
-
-
-    reconsturcted_faces = (mx + (face_space_coordinates * eigenvectors)')';
+    face_space_coordinates = (B' * eigenvectors');
     
-    face1 = reconsturcted_faces(1,:);
+    eigenfaces=[];
+    
+    for k=1:no_faces
+        eigface  = face_space_coordinates(:, k);
+        eigenfaces{k} = reshape(eigface,im_size,im_size);
+    end
+    
+x=diag(eigenvalues);
+[xc,xci]=sort(x,'descend');% largest eigenval    
+z  = [ eigenfaces{xci(1)}  eigenfaces{xci(2)}   eigenfaces{xci(3)} ; eigenfaces{xci(4)}     eigenfaces{xci(5)}   eigenfaces{xci(6)}];
+figure(5),imagesc(z);;title('eigenfaces');colormap gray
+
+%%
+    
+    rec = face_space_coordinates' * eigenvectors;
+
+%     reconstructed = (mx + sum(face_space_coordinates))';
+    
+    reconsturcted_faces = (mx + rec')';
+    
+    face1 = reconsturcted_faces(100,:);
     face1_reshaped = reshape(face1, 32, 32);
-    imshow(face1_reshaped,'InitialMagnification', 2000)
+%     imagesc(face1_reshaped)
+    imshow(face1_reshaped,'Initialmagnification','fit')
     
     img_sum = zeros(im_size);
 
