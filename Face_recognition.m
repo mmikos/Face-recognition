@@ -4,68 +4,69 @@
     im_size = 32; 
     no_faces = 400;
     
-    im_norm = double(fea);
-    im_norm = (im_norm-min(im_norm(:)))/(max(im_norm(:))-min(im_norm(:)));
-%     im_norm = im_norm(2,:);
-%%
+    %normalize
+    im = double(fea);
+    im_norm = im/255;
+
     [no_faces, face_size] = size(im_norm);
 
-    mx = mean(im_norm);
-    mx_reshaped = reshape(mx, 32, 32);
+    mean_face = mean(im_norm);
+    mx_reshaped = reshape(mean_face, 32, 32);
     imshow(mx_reshaped,'Initialmagnification','fit')
     title('Mean face')
-    colormap gray
     
     % Substract mean
-    B = (im_norm-mx)';
+    img_subst_mean = (im_norm-mean_face)';
   
     % Covariance matrix
 %     S2 = cov(B);
-    S = 1/no_faces * B*B';
+    S = 1/no_faces * img_subst_mean * img_subst_mean';
     
     [eigenvectors, diagmatrix] = eig(S);
     
-    top_number = 63;
+    k = 63;
+    
     k_eigenvectors=[];
     
-     for j = 1:top_number
-        eigface  = eigenvectors(:, j);
-        k_eigenvectors{j} = reshape(eigface,im_size,im_size);
+     for j = 1:k
+        eigvec  = eigenvectors(:, j);
+        k_eigenvectors{j} = reshape(eigvec,im_size,im_size);
      end
      
     figure();
-    for j = 1:top_number
+    for j = 1:k
       subplot(8,9,j);
       imagesc(k_eigenvectors{j});
       colormap gray
+      axis off
     end
 %     title('Top eigenvectors')
      
-    face_space_coordinates = (eigenvectors' * B);
+    eigenvectors = eigenvectors(:, 1:k);
+    
+    face_space_coordinates = (eigenvectors' * img_subst_mean);
     
     eigenfaces=[];
     
-    for m=1:no_faces
-        eigface  = face_space_coordinates(m, :);
-        eigenfaces{m} = reshape(eigface,im_size,im_size);
+    for j = 1:no_faces
+        eigface  = face_space_coordinates(j, :);
+        eigenfaces{j} = reshape(eigface,im_size,im_size);
     end   
 
-    eigenvalues = diag(diageigenvalues);
-    [sorted_values, index] = sort(eigenvalues,'descend');% largest eigenvalue first - biggest variance
-
-    face_vector2  = [eigenfaces{index(1)} eigenfaces{index(2)} eigenfaces{index(3)};
-                    eigenfaces{index(4)} eigenfaces{index(5)} eigenfaces{index(6)};
-                    eigenfaces{index(7)} eigenfaces{index(8)} eigenfaces{index(9)};
-                    eigenfaces{index(10)} eigenfaces{index(11)} eigenfaces{index(12)}];
-
-    figure;
-    imagesc(face_vector2);
-    title('eigenfaces2');
-    colormap gray
+%     eigenvalues = diag(diageigenvalues);
+%     [sorted_values, index] = sort(eigenvalues,'descend');% largest eigenvalue first - biggest variance
+    figure();
+    for j = 1:k
+      subplot(4,5,j);
+      imagesc(eigenfaces{j});
+      colormap gray
+      axis off
+    end
+    
     
     %% Training
     
-    clear
+%     clear
     load('faces/ORL_32x32')
     load('faces/7Train/7.mat')
 
@@ -78,7 +79,7 @@
     train_faces = double(train_faces);
     train_faces = train_faces/255;     
 
-    k = 100;
+    k = 10;
         
     [mean_face, eigenvectors] = eigenfaces_train(train_faces, k); 
     
@@ -91,7 +92,7 @@
      
     figure();
     for j = 1:k
-      subplot(10,11,j);
+      subplot(4,5,j);
       imagesc(k_eigenvectors{j});
       colormap gray
       axis off
@@ -115,12 +116,12 @@
              
 %     [sorted_values, index] = sort(eigenvalues,'descend');% largest eigenvalue first - biggest variance
 %     class = zeros(1, length(test3_class));
-%% Accuracy
+%% Test + Accuracy
     
 %     clear
     
     load('faces/ORL_32x32')
-    load('faces/7Train/7.mat')
+    load('faces/5Train/5.mat')
 
     train_faces = fea(trainIdx, :);
     train_class = gnd(trainIdx, :);
@@ -140,7 +141,7 @@
     
     k = 100;
     
-    accuracy7 = zeros(1, length(k));
+    accuracy5 = zeros(1, length(k));
     
     for i = 1:k
         
@@ -165,13 +166,65 @@
             
         end
         
-        accuracy7(i) = sum(class == test_class')/length(test_class)*100;
+        accuracy5(i) = sum(class == test_class')/length(test_class)*100;
                   
     end   
     
-    [val, arg] = max(accuracy);
-    k_value = k(arg);
+    [val, arg] = max(accuracy5);
+    k_value_best = arg;
+
+    %% Plotting
+    figure();
     
+    plot(accuracy3);
+
+    hold on 
+    plot(accuracy5) ; 
+    hold on 
+    plot(accuracy7);
+    legend('3Train','5Train','7Train')
+    xlabel('Number of eigenvectors, k')
+    ylabel('Classification accuracy')
+    hold off
 %     reconsturction = mean_face + eigenface_space'; 
 
 %     d = median(train3_class(neighbors,1:k));
+
+%% Reconstruction
+
+[mean_face, eigenvectors] = eigenfaces_train(train_faces, k_value_best); 
+        
+project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)');
+
+reconstuction = mean_face' + eigenvectors * project_eigenfaces_train;
+
+    
+    reconstructed_image = [];
+    
+     for j = 1:no_faces_train
+        eigface  = reconstuction(:, j);
+        reconstructed_image{j} = reshape(eigface,im_size,im_size);
+     end
+     
+    figure(1);
+    for j = 1:no_faces_train/4
+      subplot(10,5,j);
+      imagesc(reconstructed_image{j});
+      colormap gray
+      axis off
+    end
+    
+       original_images = [];
+    
+     for j = 1:no_faces_train
+        org_face  = train_faces(j, :);
+        original_images{j} = reshape(org_face,im_size,im_size);
+     end
+     
+    figure(2);
+    for j = 1:no_faces_train/4
+      subplot(10,5,j);
+      imagesc(original_images{j});
+      colormap gray
+      axis off
+    end
