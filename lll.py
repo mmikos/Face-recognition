@@ -13,7 +13,7 @@ class NearestNeighbor:
         self.feature_space = np.dot((train_images-self.mean_face), self.eigenvectors.T)
         self.classes = train_class
 
-    def test(self, test_image, k=1):
+    def test(self, test_image, k=10):
         # project into feature space
         space = np.dot((test_image-self.mean_face), self.eigenvectors.T).reshape(1, -1)
         distances = cdist(space, self.feature_space)[0]
@@ -22,7 +22,7 @@ class NearestNeighbor:
         return np.median(self.classes[closest_neighbors][:k])
 
 
-def get_best_k(images, k_values, neighbors=1):
+def get_best_k(images, k_values, neighbors=10):
     accuracies = np.zeros(len(k_values))
     for i, k in enumerate(k_values):
         face_mean, eigenvecs = eigenfaces_train(images, k=k)
@@ -133,7 +133,7 @@ plt.show()
 
 ### Here you can manually choose the number of eigenvectors
 ### If you want to have the best number of eigenvectors just comment it out
-best_k = 40
+best_k = 10
 face_mean, eigenvecs = eigenfaces_train(trainFaces, best_k)
 # Plot the eigenfaces
 plot_eigenfaces(trainFaces, best_k)
@@ -143,8 +143,9 @@ nn = NearestNeighbor()
 nn.train(trainFaces, trainClass, eigenvecs, face_mean)
 # Classify the test images with the trained NN
 classification = np.zeros(len(testClass), dtype=int)
+
 for i, face in enumerate(testFaces):
-    classification[i] = nn.test(face, k=2)
+    classification[i] = nn.test(face, k=10)
 # calculate accuracy --> correct classifications / all classifications
-accuracy = np.sum(classification==testClass)/len(testClass)*100
+    accuracy = np.sum(classification==testClass)/len(testClass)*100
 print(f'Accuracy with k={best_k}: {accuracy:.2f}%')
