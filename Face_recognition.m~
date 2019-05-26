@@ -118,66 +118,59 @@
 %     class = zeros(1, length(test3_class));
 %% Test + Accuracy
     
-%     clear
-    
-    load('faces/ORL_32x32')
-    load('faces/5Train/5.mat')
-
-    train_faces = fea(trainIdx, :);
-    train_class = gnd(trainIdx, :);
-           
-    test_faces = fea(testIdx, :);
-    test_class = gnd(testIdx, :);
-    
-    train_faces = double(train_faces);
-    train_faces = train_faces/255;   
-    
-    test_faces = double(test_faces);
-    test_faces = test_faces/255;
-    
-    [no_faces_test, face_size_test] = size(test_faces);
-    
-    [no_faces_train, face_size_train] = size(train_faces);
+    clear
+    no_training_img = [3 5 7];
+%     no_training_img = 3;
+    im_size = 32; 
     
     k = 100;
     
-    accuracy5 = zeros(1, length(k));
+    [train_faces, train_class, test_faces, test_class] = get_data(no_training_img);
+   
+    for i = 1:length(no_training_img)
+        eval(['accuracy' num2str(no_training_img(i)) '= zeros(1, k)']);
+        eval(['reconstruction_error' num2str(no_training_img(i)) '= zeros(1, k)']);    
+    end
     
-    for i = 1:k
+    for m = 
         
-        [mean_face, eigenvectors] = eigenfaces_train(train_faces, i); 
-        
-        project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)');
-        
-        class = zeros(1, length(test_class));
-        
-        for j = 1:no_faces_test
+        for i = 1:k
 
-            project_eigenfaces_test = (eigenvectors' * (test_faces(j,:)-mean_face)');
+            [mean_face, eigenvectors] = eigenfaces_train(train_faces, i); 
 
-            distance = pdist2(project_eigenfaces_test', project_eigenfaces_train');
+            project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)');
 
-            [sorted_values, neighbors] = sort(distance);
-            
-            % taking the closest neighbor (first from sorted list) and 
-            % assigning the class from the train set
-            
-            class(j) = train_class(neighbors(1)); 
-            
-        end
-        
-        accuracy5(i) = sum(class == test_class')/length(test_class)*100;
-                  
-    end   
+            class = zeros(1, length(test_class));
+
+            for j = 1:no_faces_test
+
+                project_eigenfaces_test = (eigenvectors' * (test_faces(j,:)-mean_face)');
+
+                distance = pdist2(project_eigenfaces_test', project_eigenfaces_train');
+
+                [sorted_values, neighbors] = sort(distance);
+
+                % taking the closest neighbor (first from sorted list) and 
+                % assigning the class from the train set
+
+                class(j) = train_class(neighbors(1)); 
+
+            end
+
+            reconstuction = mean_face' + eigenvectors * project_eigenfaces_train;
+
+            accuracy5(i) = sum(class == test_class')/length(test_class)*100;
+
+            reconstruction_error5(i) = sum(sum(abs(train_faces - reconstuction')));   
+        end   
     
     [val, arg] = max(accuracy5);
     k_value_best = arg;
 
     %% Plotting
-    figure();
+    figure(1);
     
     plot(accuracy3);
-
     hold on 
     plot(accuracy5) ; 
     hold on 
@@ -185,6 +178,18 @@
     legend('3Train','5Train','7Train')
     xlabel('Number of eigenvectors, k')
     ylabel('Classification accuracy')
+    hold off
+    
+    figure(2);
+    
+    plot(reconstruction_error3);
+    hold on 
+    plot(reconstruction_error5) ; 
+    hold on 
+    plot(reconstruction_error7);
+    legend('3Train','5Train','7Train')
+    xlabel('Number of eigenvectors, k')
+    ylabel('Reconstruction error')
     hold off
 %     reconsturction = mean_face + eigenface_space'; 
 
@@ -196,35 +201,52 @@
         
 project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)');
 
+reconst_no_mean = eigenvectors * project_eigenfaces_train;
+
 reconstuction = mean_face' + eigenvectors * project_eigenfaces_train;
 
     
-    reconstructed_image = [];
+    reconstructed_no_mean = [];
     
-     for j = 2:(no_faces_train + 1)
-        eigface  = reconstuction(:, j);
-        reconstructed_image{j} = reshape(eigface,im_size,im_size);
+     for j = 1:no_faces_train
+        eigface  = reconst_no_mean(:, j);
+        reconstructed_no_mean{j} = reshape(eigface,im_size,im_size);
      end
      
-    figure();
-    for j = 1:no_faces_train/3
+    figure(1);
+    for j = 1:no_faces_train/4
+      subplot(10,5,j);
+      imagesc(reconstructed_no_mean{j});
+      colormap gray
+      axis off
+    end
+    
+        reconstructed_image = [];
+    
+     for j = 1:no_faces_train
+        recface  = reconstuction(:, j);
+        reconstructed_image{j} = reshape(recface,im_size,im_size);
+     end
+     
+    figure(2);
+    for j = 1:no_faces_train/4
       subplot(10,5,j);
       imagesc(reconstructed_image{j});
       colormap gray
       axis off
     end
     
-       reconstructed_image = [];
+       original_images = [];
     
-     for j = 2:(no_faces_train + 1)
-        eigface  = reconstuction(:, j);
-        reconstructed_image{j} = reshape(eigface,im_size,im_size);
+     for j = 1:no_faces_train
+        org_face  = train_faces(j, :);
+        original_images{j} = reshape(org_face,im_size,im_size);
      end
      
-    figure();
-    for j = 1:no_faces_train/3
+    figure(3);
+    for j = 1:no_faces_train/4
       subplot(10,5,j);
-      imagesc(reconstructed_image{j});
+      imagesc(original_images{j});
       colormap gray
       axis off
     end
