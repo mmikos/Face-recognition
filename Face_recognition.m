@@ -4,7 +4,7 @@ clear
 
 % extract original images from training set
 
-m = 3; % no of training images per person (m = 3 for 3Train etc.)
+m = 7; % no of training images per person (m = 3 for 3Train etc.)
 
 im_size = 32; 
 
@@ -31,7 +31,7 @@ end
 
 k = 70; % define how many eigenvecotrs will be used (PC)
 
-[mean_face, eigenvectors] = eigenfaces_train(train_faces, k); 
+[mean_face, eigenvectors] = eigenfaces_train(train_faces, k, 'T'); 
 
 % plot meanface
 
@@ -61,7 +61,7 @@ end
 
 %% MAIN: Train + Test + Accuracy
 
-clear
+% clear
 
 no_training_set = [3 5 7];
 
@@ -73,41 +73,32 @@ accuracy = zeros(1, k);
 
 reconstruction_error = zeros(1, k);
 
+type = 'T';
+
+tic()
+
 for m = 1:length(no_training_set)
 
 [train_faces, train_class, test_faces, test_class, ~, no_img_test] = get_data(no_training_set(m));
 
     for i = 1:k
 
-        [mean_face, eigenvectors] = eigenfaces_train(train_faces, i); 
+        [mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, i, type);     
         
-        %Project training img onto the subspace spanned by k-PC
-        project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)'); 
-
-        class = zeros(1, length(test_class));
-
+        classes_assigned = zeros(1, length(test_class));
+        
         for j = 1:no_img_test
             
-            %Project test img onto the subspace spanned by eigenfaces
-            project_eigenfaces_test = (eigenvectors' * (test_faces(j,:)-mean_face)');
-            
-            %calculate distance between teh subspaces
-            distance = pdist2(project_eigenfaces_test', project_eigenfaces_train');
+            class = eigenfaces_test(eigenvectors, mean_face, test_faces, train_class, j, project_eigenfaces_train);
 
-            [sorted_values, neighbors] = sort(distance);
-
-            % taking the closest neighbor (smallest distance 1st from 
-            % sorted list) and assigning the class from the train set
-
-            class(j) = train_class(neighbors(1)); 
-
+            classes_assigned(j) = class;
         end
-                
-        reconstuction = mean_face' + eigenvectors * project_eigenfaces_train;
+        
+        [reconstuction, ~] = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, i, type);
+        
+        accuracy(i) = sum(classes_assigned == test_class')/length(test_class)*100;
 
-        accuracy(i) = sum(class == test_class')/length(test_class)*100;
-
-        reconstruction_error(i) = sum(sum(abs(train_faces - reconstuction')));   
+        reconstruction_error(i) = mean(mean((train_faces - reconstuction').^2));   
     end
     
     st.accuracy{m} = accuracy;
@@ -118,6 +109,10 @@ for m = 1:length(no_training_set)
     
 end
 
+toc() 
+
+% using dimensionality redution for eigenspace decomposition: 12.45 sec
+% using sigma covariance matrix for eigenspace decomposition: 222.16 sec
 %% Plotting classification and reconstruction accuracy
     
 figure(4);
@@ -148,18 +143,13 @@ hold off
 
 no_training_set = [3 5 7];
 
-m = 1;
+m = 3; % number of a positon in a vector no_training_set
 
 [train_faces, ~, ~, ~, no_img_train, ~] = get_data(no_training_set(m));
 
-[mean_face, eigenvectors] = eigenfaces_train(train_faces, st.k_value_best{m}); 
+[mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);   
 
-project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)');
-
-reconst_no_mean = eigenvectors * project_eigenfaces_train;
-
-reconstuction = mean_face' + eigenvectors * project_eigenfaces_train;
-
+[reconstuction, reconst_no_mean] = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, st.k_value_best{m}, type);
 
 % extract reconstructed images without mean from training set
 
@@ -181,20 +171,21 @@ end
 
 %% Plot reconstructed images
 
+n = no_training_set(m);
 
  figure(6);
 
- for j = 1:10*m
-     subplot(10, m, j);
+ for j = 1:10*n
+     subplot(10, n, j);
      imagesc(reconstructed_no_mean{j});
      colormap gray
      axis off
  end
 
-figure(7);
+figure(7);  
 
-for j = 1:10*m
-    subplot(10, m, j);
+for j = 1:10*n
+    subplot(10, n, j);
     imagesc(reconstructed_image{j});
     colormap gray
     axis off

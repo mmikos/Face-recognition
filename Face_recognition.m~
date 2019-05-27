@@ -4,7 +4,7 @@ clear
 
 % extract original images from training set
 
-m = 3; % number of training images per person (mTrain: 3Train, 5Train, 7Train)
+m = 7; % no of training images per person (m = 3 for 3Train etc.)
 
 im_size = 32; 
 
@@ -17,10 +17,10 @@ for j = 1:no_img_train
     original_images{j} = reshape(org_face,im_size,im_size);
 end
 
-figure(1);
+figure(1); % Plot first 10 people (10*m faces)
 
-for j = 1:no_img_train/4
-    subplot(no_img_train/(4*m), m, j);
+for j = 1:10*m
+    subplot(10, m, j);
     imagesc(original_images{j});
     colormap gray
     axis off
@@ -29,19 +29,19 @@ end
     
 %% Eigenfaces and mean face
 
-k = 50;
+k = 70; % define how many eigenvecotrs will be used (PC)
 
-[mean_face, eigenvectors] = eigenfaces_train(train_faces, k); 
+[mean_face, eigenvectors] = eigenfaces_train(train_faces, k, 'T'); 
 
 % plot meanface
 
 mean_face_img = reshape(mean_face, 32, 32);
 
-figure(2);
+figure(2); %plot menaface
 imshow(mean_face_img,'Initialmagnification','fit')
 title('Mean face')
 
-% extract eigenfaces from training set
+% extract eigenfaces from training set using k eigenvectors
 
 k_eigenvectors=[];
     
@@ -50,27 +50,32 @@ k_eigenvectors=[];
     k_eigenvectors{j} = reshape(eigface,im_size,im_size);
  end
 
-figure(3);
-for j = 1:k
-  subplot(k/m, m, j);
+figure(3); %plot k-eigenfaces
+
+for j = 1:10*m
+  subplot(10, m, j);
   imagesc(k_eigenvectors{j});
   colormap gray
   axis off
 end
 
-%% Train + Test + Accuracy
+%% MAIN: Train + Test + Accuracy
 
-clear
+% clear
 
 no_training_set = [3 5 7];
 
 im_size = 32; 
 
-k = 100;
+k = 100; % no eigenvectors
 
 accuracy = zeros(1, k);
 
 reconstruction_error = zeros(1, k);
+
+type = 'T';
+
+tic()
 
 for m = 1:length(no_training_set)
 
@@ -78,42 +83,36 @@ for m = 1:length(no_training_set)
 
     for i = 1:k
 
-        [mean_face, eigenvectors] = eigenfaces_train(train_faces, i); 
-
-        project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)');
-
-        class = zeros(1, length(test_class));
-
+        [mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, i, type);     
+        
+        classes_assigned = zeros(1, length(test_class));
+        
         for j = 1:no_img_test
+            
+            class = eigenfaces_test(eigenvectors, mean_face, test_faces, train_class, j, project_eigenfaces_train);
 
-            project_eigenfaces_test = (eigenvectors' * (test_faces(j,:)-mean_face)');
-
-            distance = pdist2(project_eigenfaces_test', project_eigenfaces_train');
-
-            [sorted_values, neighbors] = sort(distance);
-
-            % taking the closest neighbor (first from sorted list) and 
-            % assigning the class from the train set
-
-            class(j) = train_class(neighbors(1)); 
-
+            classes_assigned(j) = class;
         end
+        
+        reconstuction = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, i, type);
+        
+        accuracy(i) = sum(classes_assigned == test_class')/length(test_class)*100;
 
-        reconstuction = mean_face' + eigenvectors * project_eigenfaces_train;
-
-        accuracy(i) = sum(class == test_class')/length(test_class)*100;
-
-        reconstruction_error(i) = sum(sum(abs(train_faces - reconstuction')));   
+        reconstruction_error(i) = mean(mean((train_faces - reconstuction').^2));   
     end
     
     st.accuracy{m} = accuracy;
     st.reconstruction_error{m} = reconstruction_error;
     
     [val, arg] = max(accuracy);
-    st.k_value_best{m} = arg;
+    st.k_value_best{m} = arg; % take the k that guarantees max accuracy
     
 end
 
+toc() 
+
+% using dimensionality redution for eigenspace decomposition: 12.45 sec
+% using sigma covariance matrix for eigenspace decomposition: 222.16 sec
 %% Plotting classification and reconstruction accuracy
     
 figure(4);
@@ -142,18 +141,17 @@ hold off
 
 %% Reconstruction - extract images
 
-m = 3;
+no_training_set = [3 5 7];
 
-[train_faces, ~, ~, ~, no_img_train, ~] = get_data(m);
+m = 3; % number of a positon in a vector no_training_set
 
-[mean_face, eigenvectors] = eigenfaces_train(train_faces, st.k_value_best_{m}); 
+[train_faces, ~, ~, ~, no_img_train, ~] = get_data(no_training_set(m));
 
-project_eigenfaces_train = (eigenvectors' * (train_faces-mean_face)');
+[mean_face, eigenvectors, eigenvalues] = eigenfaces_train(train_faces, st.k_value_best{m}, type); 
 
-reconst_no_mean = eigenvectors * project_eigenfaces_train;
+[mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, i, type);   
 
-reconstuction = mean_face' + eigenvectors * project_eigenfaces_train;
-
+reconstuction = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, i, type);
 
 % extract reconstructed images without mean from training set
 
@@ -175,20 +173,21 @@ end
 
 %% Plot reconstructed images
 
+n = no_training_set(m);
 
  figure(6);
 
- for j = 1:10*m
-     subplot(10, m, j);
+ for j = 1:10*n
+     subplot(10, n, j);
      imagesc(reconstructed_no_mean{j});
      colormap gray
      axis off
  end
 
-figure(7);
+figure(7);  
 
-for j = 1:10*m
-    subplot(10, m, j);
+for j = 1:10*n
+    subplot(10, n, j);
     imagesc(reconstructed_image{j});
     colormap gray
     axis off
