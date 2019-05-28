@@ -31,7 +31,9 @@ end
 
 k = 70; % define how many eigenvecotrs will be used (PC)
 
-[mean_face, eigenvectors] = eigenfaces_train(train_faces, k, 'T'); 
+type = 'S';
+
+[mean_face, eigenvectors, ~] = eigenfaces_train(train_faces, k, type);
 
 % plot meanface
 
@@ -46,7 +48,7 @@ title('Mean face')
 k_eigenvectors=[];
     
  for j = 1:k
-    eigface  = eigenvectors(:, j);
+    eigface  = real(eigenvectors(:, j));
     k_eigenvectors{j} = reshape(eigface,im_size,im_size);
  end
 
@@ -73,7 +75,7 @@ accuracy = zeros(1, k);
 
 reconstruction_error = zeros(1, k);
 
-type = 'T';
+type = 'S';
 
 tic()
 
@@ -148,9 +150,11 @@ no_training_set = [3 5 7];
 
 m = 2; % number of a positon in a vector no_training_set
 
-[train_faces, ~, ~, ~, no_img_train, ~] = get_data(no_training_set(m));
+n = no_training_set(m);
 
-[mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
+[train_faces, ~, ~, ~, no_img_train, ~] = get_data(n);
+
+[mean_face, eigenvectors, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
 
 [reconstuction, reconst_no_mean] = reconstruct_face(eigenvectors, mean_face, project_eigenfaces_train);
 
@@ -174,7 +178,6 @@ end
 
 %% Plot reconstructed images
 
-n = no_training_set(m);
 
  figure(6);
 
