@@ -25,7 +25,7 @@ if type == 'S'
     
     covariance_matrix = (1/no_faces) * img_subst_mean * (img_subst_mean');
 
-    [eigenvectors, eigenvalues] = eig(covariance_matrix); 
+    [eigenvectors, ~] = eig(covariance_matrix); 
 
 % applying dimensionality redution on eigen decomposition (T instead of
 % covariance_matrix - sigma)
@@ -38,8 +38,8 @@ elseif type == 'T'
     
     eigenvectors = img_subst_mean * eigenvectorsT; 
     
-    % eigenvectors of img_subst_mean are left singular vectors of 
-    % img_subst_mean, hence dividing by sqrt(eigenvalues)
+    % eigenvectors of ((img_subst_mean') * (img_subst_mean)) are left singular
+    % vectors of img_subst_mean, hence dividing by sqrt(eigenvalues)
 
     eigenvectors = eigenvectors/(sqrt(eigenvalues));
     
