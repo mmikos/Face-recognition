@@ -61,13 +61,13 @@ end
 
 %% MAIN: Train + Test + Accuracy
 
-% clear
+clear
 
 no_training_set = [3 5 7];
 
 im_size = 32; 
 
-k = 100; % no eigenvectors
+k = 60; % no eigenvectors
 
 accuracy = zeros(1, k);
 
@@ -83,7 +83,7 @@ for m = 1:length(no_training_set)
 
     for i = 1:k
 
-        [mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, i, type);     
+        [mean_face, eigenvectors, project_eigenfaces_train] = eigenfaces_train(train_faces, i, type);     
         
         classes_assigned = zeros(1, length(test_class));
         
@@ -94,7 +94,7 @@ for m = 1:length(no_training_set)
             classes_assigned(j) = class;
         end
         
-        [reconstuction, ~] = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, i, type);
+        [reconstuction, ~] = reconstruct_face(eigenvectors, mean_face, project_eigenfaces_train);
         
         accuracy(i) = sum(classes_assigned == test_class')/length(test_class)*100;
 
@@ -111,8 +111,8 @@ end
 
 toc() 
 
-% using dimensionality redution for eigenspace decomposition: 12.45 sec
-% using sigma covariance matrix for eigenspace decomposition: 222.16 sec
+% using dimensionality redution for eigenspace decomposition: 9 sec
+% using sigma covariance matrix for eigenspace decomposition: 149 sec
 %% Plotting classification and reconstruction accuracy
     
 figure(4);
@@ -141,15 +141,18 @@ hold off
 
 %% Reconstruction - extract images
 
+% cheking reconstructions for the best k
+type = 'T';
+
 no_training_set = [3 5 7];
 
-m = 3; % number of a positon in a vector no_training_set
+m = 2; % number of a positon in a vector no_training_set
 
 [train_faces, ~, ~, ~, no_img_train, ~] = get_data(no_training_set(m));
 
-[mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);   
+[mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
 
-[reconstuction, reconst_no_mean] = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, st.k_value_best{m}, type);
+[reconstuction, reconst_no_mean] = reconstruct_face(eigenvectors, mean_face, project_eigenfaces_train);
 
 % extract reconstructed images without mean from training set
 
