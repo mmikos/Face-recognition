@@ -38,8 +38,13 @@ elseif type == 'T'
     
     eigenvectors = img_subst_mean * eigenvectorsT; 
     
+<<<<<<< HEAD
     % eigenvectors of ((img_subst_mean') * (img_subst_mean)) are left singular
     % vectors of img_subst_mean, hence dividing by sqrt(eigenvalues)
+=======
+    % eigenvectors of img_subst_mean are left singular vectors of 
+    % img_subst_mean, hence dividing by sqrt(eigenvalues)
+>>>>>>> cdec3d3... ff
 
     eigenvectors = eigenvectors/(sqrt(eigenvalues));
     
