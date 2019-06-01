@@ -31,9 +31,7 @@ end
 
 k = 70; % define how many eigenvecotrs will be used (PC)
 
-type = 'S';
-
-[mean_face, eigenvectors, ~] = eigenfaces_train(train_faces, k, type);
+[mean_face, eigenvectors] = eigenfaces_train(train_faces, k, 'T'); 
 
 % plot meanface
 
@@ -48,7 +46,7 @@ title('Mean face')
 k_eigenvectors=[];
     
  for j = 1:k
-    eigface  = real(eigenvectors(:, j));
+    eigface  = eigenvectors(:, j);
     k_eigenvectors{j} = reshape(eigface,im_size,im_size);
  end
 
@@ -75,7 +73,7 @@ accuracy = zeros(1, k);
 
 reconstruction_error = zeros(1, k);
 
-type = 'S';
+type = 'T';
 
 tic()
 
@@ -85,7 +83,7 @@ for m = 1:length(no_training_set)
 
     for i = 1:k
 
-        [mean_face, eigenvectors, project_eigenfaces_train] = eigenfaces_train(train_faces, i, type);     
+        [mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, i, type);     
         
         classes_assigned = zeros(1, length(test_class));
         
@@ -96,7 +94,7 @@ for m = 1:length(no_training_set)
             classes_assigned(j) = class;
         end
         
-        [reconstuction, ~] = reconstruct_face(eigenvectors, mean_face, project_eigenfaces_train);
+        [reconstuction, ~] = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, i, type);
         
         accuracy(i) = sum(classes_assigned == test_class')/length(test_class)*100;
 
@@ -144,26 +142,17 @@ hold off
 %% Reconstruction - extract images
 
 % cheking reconstructions for the best k
-type = 'T';
+type = '';
 
 no_training_set = [3 5 7];
 
 m = 2; % number of a positon in a vector no_training_set
-<<<<<<< HEAD
 
-n = no_training_set(m);
-=======
->>>>>>> cdec3d3... ff
+[train_faces, ~, ~, ~, no_img_train, ~] = get_data(no_training_set(m));
 
-[train_faces, ~, ~, ~, no_img_train, ~] = get_data(n);
-
-<<<<<<< HEAD
-[mean_face, eigenvectors, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
-=======
 [mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
->>>>>>> cdec3d3... ff
 
-[reconstuction, reconst_no_mean] = reconstruct_face(eigenvectors, mean_face, project_eigenfaces_train);
+[reconstuction, reconst_no_mean, eigenvectors] = reconstruct_face(eigenvectors, eigenvalues, mean_face, project_eigenfaces_train, st.k_value_best{m}, type);
 
 % extract reconstructed images without mean from training set
 
@@ -185,6 +174,7 @@ end
 
 %% Plot reconstructed images
 
+n = no_training_set(m);
 
  figure(6);
 
