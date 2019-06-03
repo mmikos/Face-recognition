@@ -23,8 +23,8 @@ distance = pdist2(real(project_eigenfaces_test'), real(project_eigenfaces_train'
 
 [~, neighbors] = sort(distance);
 
-% taking the closest neighbor (smallest distance 1st from 
-% sorted list) and assigning the class from the train set
+% Take closest neighbor (smallest distance 1st from sorted list) and assign
+% the class from the train set
 
 class = train_class(neighbors(1)); 
 
