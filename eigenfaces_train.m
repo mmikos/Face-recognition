@@ -40,6 +40,13 @@ elseif type == 'T'
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+    % eigenvectors of ((img_subst_mean') * (img_subst_mean)) are left singular
+    % vectors of img_subst_mean, hence dividing by sqrt(eigenvalues)
+=======
+<<<<<<< HEAD
+>>>>>>> origin/master
+<<<<<<< HEAD
     % eigenvectors of ((img_subst_mean') * (img_subst_mean)) are left singular
     % vectors of img_subst_mean, hence dividing by sqrt(eigenvalues)
 =======
@@ -50,6 +57,10 @@ elseif type == 'T'
     % eigenvectors of ((img_subst_mean') * (img_subst_mean)) are left singular
     % vectors of img_subst_mean, hence dividing by sqrt(eigenvalues)
 >>>>>>> 240fc6d... h
+<<<<<<< HEAD
+=======
+>>>>>>> de327d9a324774ff67cefa6227fa89afb00f40af
+>>>>>>> origin/master
 
     eigenvectors = eigenvectors/(sqrt(eigenvalues));
     
