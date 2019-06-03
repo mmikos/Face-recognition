@@ -40,6 +40,7 @@ elseif type == 'T'
     
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     % eigenvectors of ((img_subst_mean') * (img_subst_mean)) are left singular
     % vectors of img_subst_mean, hence dividing by sqrt(eigenvalues)
@@ -61,6 +62,14 @@ elseif type == 'T'
 =======
 >>>>>>> de327d9a324774ff67cefa6227fa89afb00f40af
 >>>>>>> origin/master
+=======
+    % eigenvectors of ((img_subst_mean') * (img_subst_mean)) are left singular
+    % vectors of img_subst_mean, hence dividing by sqrt(eigenvalues)
+=======
+    % eigenvectors of img_subst_mean are left singular vectors of 
+    % img_subst_mean, hence dividing by sqrt(eigenvalues)
+>>>>>>> cdec3d3... ff
+>>>>>>> 11587ff... PCA FA
 
     eigenvectors = eigenvectors/(sqrt(eigenvalues));
     
