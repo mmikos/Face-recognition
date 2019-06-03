@@ -149,6 +149,7 @@ type = 'T';
 no_training_set = [3 5 7];
 
 m = 2; % number of a positon in a vector no_training_set
+<<<<<<< HEAD
 
 n = no_training_set(m);
 
@@ -156,6 +157,29 @@ n = no_training_set(m);
 
 [mean_face, eigenvectors, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
 
+=======
+<<<<<<< HEAD
+
+n = no_training_set(m);
+<<<<<<< HEAD
+=======
+>>>>>>> cdec3d3... ff
+
+[train_faces, ~, ~, ~, no_img_train, ~] = get_data(n);
+
+<<<<<<< HEAD
+[mean_face, eigenvectors, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
+=======
+[mean_face, eigenvectors, eigenvalues, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
+>>>>>>> cdec3d3... ff
+=======
+
+[train_faces, ~, ~, ~, no_img_train, ~] = get_data(n);
+
+[mean_face, eigenvectors, project_eigenfaces_train] = eigenfaces_train(train_faces, st.k_value_best{m}, type);
+>>>>>>> 240fc6d... h
+
+>>>>>>> de327d9a324774ff67cefa6227fa89afb00f40af
 [reconstuction, reconst_no_mean] = reconstruct_face(eigenvectors, mean_face, project_eigenfaces_train);
 
 % extract reconstructed images without mean from training set
